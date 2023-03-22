@@ -6,8 +6,11 @@ from torchvision.models.utils import load_state_dict_from_url
 class VGG(nn.Module):
     def __init__(self, features, num_classes=1000):
         super(VGG, self).__init__()
+        # 所有卷积和池化层
         self.features = features
+        # 平均池化
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+        # 全连接层，共三层
         self.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(True),
@@ -17,6 +20,7 @@ class VGG(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, num_classes),
         )
+        # 权重初始化
         self._initialize_weights()
 
     def forward(self, x):
@@ -39,12 +43,14 @@ class VGG(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
+
 # 105, 105, 3   -> 105, 105, 64 -> 52, 52, 64
 # 52, 52, 64    -> 52, 52, 128  -> 26, 26, 128
 # 26, 26, 128   -> 26, 26, 256  -> 13, 13, 256
 # 13, 13, 256   -> 13, 13, 512  -> 6, 6, 512
 # 6, 6, 512     -> 6, 6, 512    -> 3, 3, 512
-def make_layers(cfg, batch_norm=False, in_channels = 3):
+# 该函数表示添加相应的卷积层和池化层，其中nn.Sequential表示一个有序的容器，神经网络模块将按照传入nn.Sequential的顺序依次被添加到计算图中执行
+def make_layers(cfg, batch_norm=False, in_channels=3):
     layers = []
     for v in cfg:
         if v == 'M':
@@ -58,12 +64,16 @@ def make_layers(cfg, batch_norm=False, in_channels = 3):
             in_channels = v
     return nn.Sequential(*layers)
 
+
 cfgs = {
-    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M']
+    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
 }
-def VGG16(pretrained, in_channels, **kwargs):
-    model = VGG(make_layers(cfgs["D"], batch_norm = False, in_channels = in_channels), **kwargs)
+
+
+def vgg16(pretrained, in_channels, **kwargs):
+    model = VGG(make_layers(cfgs["D"], batch_norm=False, in_channels=in_channels), **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url("https://download.pytorch.org/models/vgg16-397923af.pth", model_dir="./model_data")
+        state_dict = load_state_dict_from_url("https://download.pytorch.org/models/vgg16-397923af.pth",
+                                              model_dir="./model_data")
         model.load_state_dict(state_dict)
     return model
